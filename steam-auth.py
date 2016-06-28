@@ -49,3 +49,14 @@ def get_authentication_code(secret):
         auth_code_raw /= len(STEAM_ALPHABET)
 
     return ''.join(auth_code)
+
+def get_device_id(username):
+    hex_digest = hashlib.sha1(username.encode()).hexdigest()
+    device_id = [ 'android:' ]
+
+    for (start, end) in ([0, 8],[9, 13],[14, 18],[19, 23],[24, 32]):
+        device_id.append(hex_digest[start:end])
+        device_id.append('-')
+
+    device_id.pop(-1)
+    return ''.join(device_id)

@@ -35,7 +35,12 @@ def get_data_json(adb_path, steam_path):
 
 
 data = get_data_json('/usr/bin/adb', '/data/data/com.valvesoftware.android.steam.community')
-secret = data['shared_secret']
-code = steam_auth.get_authentication_code(secret)
+shared_secret = data['shared_secret']
+identity_secret = data['identity_secret']
+device_id = steam_auth.get_device_id('SteamUserName')
+auth_code = steam_auth.get_authentication_code(shared_secret)
 
-print('Secret: {}\nCode: {}'.format(secret, code))
+print("Shared Secret: {}".format(shared_secret))
+print("Identity Secret: {}".format(identity_secret))
+print("Device ID: {}".format(device_id))
+print("Auth Code: {}".format(auth_code))
