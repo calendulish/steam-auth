@@ -27,6 +27,7 @@ import subprocess
 import xml.etree.ElementTree
 
 import requests
+from bs4 import BeautifulSoup as bs
 
 STEAM_ALPHABET = ['2', '3', '4', '5', '6', '7', '8', '9',
                   'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K',
@@ -47,10 +48,14 @@ def __get_data_from_adb(path):
     return data.decode(locale.getpreferredencoding())
 
 
-def get_authentication_code(secret):
+def __get_server_time():
     query_time_url = 'https://api.steampowered.com/ITwoFactorService/QueryTime/v1'
     response = requests.post(query_time_url, headers={'user-agent':'Unknown/0.0.0'})
-    server_time = int(response.json()['response']['server_time']) + response.elapsed.seconds
+    return int(response.json()['response']['server_time']) + response.elapsed.seconds
+
+
+def get_authentication_code(secret):
+    server_time = __get_server_time()
     msg = int(server_time / 30).to_bytes(8, 'big')
     key = base64.b64decode(secret)
     auth = hmac.new(key, msg, hashlib.sha1)
@@ -66,9 +71,11 @@ def get_authentication_code(secret):
 
     return ''.join(auth_code)
 
+
 def get_key(type):
     data = __get_data_from_adb('files/Steamguard-*')
     return json.loads(data)[type]
+
 
 def get_device_id():
     data = __get_data_from_adb('shared_prefs/steam.uuid.xml')
@@ -77,11 +84,47 @@ def get_device_id():
 
 def generate_device_id(username):
     hex_digest = hashlib.sha1(username.encode()).hexdigest()
-    device_id = [ 'android:' ]
+    device_id = ['android:']
 
-    for (start, end) in ([0, 8],[9, 13],[14, 18],[19, 23],[24, 32]):
+    for (start, end) in ([0, 8], [9, 13], [14, 18], [19, 23], [24, 32]):
         device_id.append(hex_digest[start:end])
         device_id.append('-')
 
     device_id.pop(-1)
     return ''.join(device_id)
+
+
+def create_time_hash(time, tag, secret):
+    key = base64.b64decode(secret)
+    msg = time.to_bytes(8, 'big') + codecs.encode(tag)
+    auth = hmac.new(key, msg, hashlib.sha1)
+    code = base64.b64encode(auth.digest())
+
+    return codecs.decode(code)
+
+
+def get_trades(secret, cookies):
+    server_time = __get_server_time()
+
+    payload = {'p':get_device_id(),
+               'a':get_key('steamid'),
+               'k':create_time_hash(server_time, 'conf', secret),
+               't':server_time,
+               'm':'android',
+               'tag':'conf'}
+
+    response = requests.get('https://steamcommunity.com/mobileconf/conf',
+                            params=payload,
+                            cookies=cookies)
+
+    page = bs(response.content, 'html.parser')
+
+    trades = {k: [] for k in ['accept', 'cancel', 'trade_id', 'trade_key', 'description']}
+    for item in page.findAll('div', class_='mobileconf_list_entry'):
+        trades['accept'].append(item['data-accept'])
+        trades['cancel'].append(item['data-cancel'])
+        trades['trade_id'].append(item['data-confid'])
+        trades['trade_key'].append(item['data-key'])
+        trades['description'].append(str(item.find('div', class_='mobileconf_list_entry_description')).strip())
+
+    return trades
