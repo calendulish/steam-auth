@@ -21,6 +21,10 @@ import codecs
 import hashlib
 import hmac
 import sys
+import locale
+import os
+import subprocess
+import xml.etree.ElementTree
 
 import requests
 
@@ -28,6 +32,19 @@ STEAM_ALPHABET = ['2', '3', '4', '5', '6', '7', '8', '9',
                   'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K',
                   'M', 'N', 'P', 'Q', 'R', 'T', 'V', 'W',
                   'X', 'Y']
+
+ADB_PATH = '/usr/bin/adb'
+STEAM_PATH = '/data/data/com.valvesoftware.android.steam.community/'
+
+
+def __get_data_from_adb(path):
+    data = subprocess.check_output([ADB_PATH,
+                                    'shell',
+                                    'su',
+                                    '-c',
+                                    'cat ' + os.path.join(STEAM_PATH, path)])
+
+    return data.decode(locale.getpreferredencoding())
 
 
 def get_authentication_code(secret):
@@ -49,7 +66,13 @@ def get_authentication_code(secret):
 
     return ''.join(auth_code)
 
-def get_device_id(username):
+
+def get_device_id():
+    data = __get_data_from_adb('shared_prefs/steam.uuid.xml')
+    return xml.etree.ElementTree.fromstring(data)[0].text
+
+
+def generate_device_id(username):
     hex_digest = hashlib.sha1(username.encode()).hexdigest()
     device_id = [ 'android:' ]
 
