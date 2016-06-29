@@ -33,15 +33,14 @@ STEAM_ALPHABET = ['2', '3', '4', '5', '6', '7', '8', '9',
 def get_authentication_code(secret):
     query_time_url = 'https://api.steampowered.com/ITwoFactorService/QueryTime/v1'
     response = requests.post(query_time_url, headers={'user-agent':'Unknown/0.0.0'})
-    server_time = int(response.json()['response']['server_time'])
-    offset = server_time + response.elapsed.seconds
-    msg = int(offset / 30).to_bytes(8, 'big')
+    server_time = int(response.json()['response']['server_time']) + response.elapsed.seconds
+    msg = int(server_time / 30).to_bytes(8, 'big')
     key = base64.b64decode(secret)
     auth = hmac.new(key, msg, hashlib.sha1)
     digest = auth.digest()
     start = digest[19] & 0xF
     code = digest[start:start + 4]
-    auth_code_raw = int(codecs.encode(code, 'hex'), 16) & sys.maxsize
+    auth_code_raw = int(codecs.encode(code, 'hex'), 16) & 0x7FFFFFFF
 
     auth_code = []
     for i in range(5):
