@@ -119,7 +119,7 @@ def get_trades(secret, cookies):
 
     page = bs(response.content, 'html.parser')
 
-    trades = {k: [] for k in ['accept', 'cancel', 'trade_id', 'trade_key', 'description']}
+    trades = {k:[] for k in ['accept', 'cancel', 'trade_id', 'trade_key', 'description']}
     for item in page.findAll('div', class_='mobileconf_list_entry'):
         trades['accept'].append(item['data-accept'])
         trades['cancel'].append(item['data-cancel'])
@@ -128,3 +128,25 @@ def get_trades(secret, cookies):
         trades['description'].append(str(item.find('div', class_='mobileconf_list_entry_description')).strip())
 
     return trades
+
+
+def finalize_trade(cookies, secret, trade_id, trade_key, do='cancel'):
+    server_time = __get_server_time()
+
+    payload = {'p':get_device_id(),
+               'a':get_key('steamid'),
+               'k':create_time_hash(server_time, 'conf', secret),
+               't':server_time,
+               'm':'android',
+               'tag':'conf',
+               'cid':trade_id,
+               'ck':trade_key,
+               'op':do}
+
+    response = requests.get('https://steamcommunity.com/mobileconf/ajaxop',
+                            params=payload,
+                            cookies=cookies)
+
+    response.raise_for_status()
+
+    return response
