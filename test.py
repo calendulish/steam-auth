@@ -17,30 +17,17 @@
 #
 
 import importlib
-import json
-import locale
-import subprocess
 
 steam_auth = importlib.__import__('steam-auth')
 
-
-def get_data_json(adb_path, steam_path):
-    data = subprocess.check_output([adb_path,
-                                    'shell',
-                                    'su',
-                                    '-c',
-                                    'cat ' + steam_path + '/files/Steamguard-*'])
-
-    return json.loads(data.decode(locale.getpreferredencoding()))
-
-
-data = get_data_json('/usr/bin/adb', '/data/data/com.valvesoftware.android.steam.community')
-shared_secret = data['shared_secret']
-identity_secret = data['identity_secret']
-device_id = steam_auth.get_device_id('SteamUserName')
+shared_secret = steam_auth.get_key('shared_secret')
+identity_secret = steam_auth.get_key('identity_secret')
+device_id = steam_auth.get_device_id()
+device_id2 = steam_auth.generate_device_id('SteamUserName')
 auth_code = steam_auth.get_authentication_code(shared_secret)
 
 print("Shared Secret: {}".format(shared_secret))
 print("Identity Secret: {}".format(identity_secret))
 print("Device ID: {}".format(device_id))
+print("Device ID2: {}".format(device_id2))
 print("Auth Code: {}".format(auth_code))
