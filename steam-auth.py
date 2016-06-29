@@ -20,7 +20,7 @@ import base64
 import codecs
 import hashlib
 import hmac
-import sys
+import json
 import locale
 import os
 import subprocess
@@ -66,6 +66,9 @@ def get_authentication_code(secret):
 
     return ''.join(auth_code)
 
+def get_key(type):
+    data = __get_data_from_adb('files/Steamguard-*')
+    return json.loads(data)[type]
 
 def get_device_id():
     data = __get_data_from_adb('shared_prefs/steam.uuid.xml')
