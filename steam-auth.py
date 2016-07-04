@@ -23,6 +23,7 @@ import hmac
 import json
 import locale
 import os
+import time
 import subprocess
 import xml.etree.ElementTree
 
@@ -39,14 +40,16 @@ STEAM_PATH = '/data/data/com.valvesoftware.android.steam.community/'
 
 
 def __get_data_from_adb(path):
-    data = subprocess.check_output([ADB_PATH,
-                                    'shell',
-                                    'su',
-                                    '-c',
-                                    'cat ' + os.path.join(STEAM_PATH, path)])
+    try:
+        data = subprocess.check_output([ADB_PATH,
+                                        'shell',
+                                        'su',
+                                        '-c',
+                                        'cat ' + os.path.join(STEAM_PATH, path)])
 
-    return data.decode(locale.getpreferredencoding())
-
+        return data.decode(locale.getpreferredencoding())
+    except subprocess.CalledProcessError:
+        print('Unable to find android phone.')
 
 def __get_server_time():
     query_time_url = 'https://api.steampowered.com/ITwoFactorService/QueryTime/v1'
@@ -77,7 +80,7 @@ def get_key(type):
         try:
             data = __get_data_from_adb('files/Steamguard-*')
             return json.loads(data)[type]
-        except ValueError:
+        except (ValueError, TypeError):
             print('Unable to get the key. Trying again.')
             time.sleep(1)
 
