@@ -73,8 +73,13 @@ def get_authentication_code(secret):
 
 
 def get_key(type):
-    data = __get_data_from_adb('files/Steamguard-*')
-    return json.loads(data)[type]
+    for i in range(2):
+        try:
+            data = __get_data_from_adb('files/Steamguard-*')
+            return json.loads(data)[type]
+        except ValueError:
+            print('Unable to get the key. Trying again.')
+            time.sleep(1)
 
 
 def get_device_id():
