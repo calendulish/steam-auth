@@ -41,11 +41,15 @@ STEAM_PATH = '/data/data/com.valvesoftware.android.steam.community/'
 
 def __get_data_from_adb(path):
     try:
-        data = subprocess.check_output([ADB_PATH,
-                                        'shell',
-                                        'su',
-                                        '-c',
-                                        'cat ' + os.path.join(STEAM_PATH, path)])
+        data = subprocess.check_output(
+            [
+                ADB_PATH,
+                'shell',
+                'su',
+                '-c',
+                f'cat {os.path.join(STEAM_PATH, path)}',
+            ]
+        )
 
         return data.decode(locale.getpreferredencoding())
     except subprocess.CalledProcessError:
@@ -68,7 +72,7 @@ def get_authentication_code(secret):
     auth_code_raw = int(codecs.encode(code, 'hex'), 16) & 0x7FFFFFFF
 
     auth_code = []
-    for i in range(5):
+    for _ in range(5):
         auth_code.append(STEAM_ALPHABET[int(auth_code_raw % len(STEAM_ALPHABET))])
         auth_code_raw /= len(STEAM_ALPHABET)
 
@@ -76,7 +80,7 @@ def get_authentication_code(secret):
 
 
 def get_key(type):
-    for i in range(2):
+    for _ in range(2):
         try:
             data = __get_data_from_adb('files/Steamguard-*')
             return json.loads(data)[type]
@@ -95,9 +99,7 @@ def generate_device_id(username):
     device_id = ['android:']
 
     for (start, end) in ([0, 8], [9, 13], [14, 18], [19, 23], [24, 32]):
-        device_id.append(hex_digest[start:end])
-        device_id.append('-')
-
+        device_id.extend((hex_digest[start:end], '-'))
     device_id.pop(-1)
     return ''.join(device_id)
 

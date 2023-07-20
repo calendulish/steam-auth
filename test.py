@@ -30,20 +30,24 @@ device_id = steam_auth.get_device_id()
 device_id2 = steam_auth.generate_device_id('SteamUserName')
 auth_code = steam_auth.get_authentication_code(shared_secret)
 
-print("Shared Secret: {}".format(shared_secret))
-print("Identity Secret: {}".format(identity_secret))
-print("Device ID: {}".format(device_id))
-print("Device ID2: {}".format(device_id2))
-print("Auth Code: {}".format(auth_code))
+print(f"Shared Secret: {shared_secret}")
+print(f"Identity Secret: {identity_secret}")
+print(f"Device ID: {device_id}")
+print(f"Device ID2: {device_id2}")
+print(f"Auth Code: {auth_code}")
 
 cookies = stcookie.getCookies('https://steamcommunity.com')
 trades = steam_auth.get_trades(identity_secret, cookies)
 
-print("\nCurrent trades: {}\n".format(trades))
+print(f"\nCurrent trades: {trades}\n")
 
 for index in range(len(trades['trade_id'])):
-    print('I\'ll accept {} with the key {}'.format(trades['trade_id'][index], trades['trade_key'][index]))
+    print(
+        f"I\'ll accept {trades['trade_id'][index]} with the key {trades['trade_key'][index]}"
+    )
 
     response = steam_auth.finalize_trade(cookies, identity_secret, trades['trade_id'][index], trades['trade_key'][index], 'accept')
 
-    print("trade accepted! ({})".format(response.content.decode(locale.getpreferredencoding())))
+    print(
+        f"trade accepted! ({response.content.decode(locale.getpreferredencoding())})"
+    )
